@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Build artifacts
+build/
+dist/
+out/
+*.log
+
+# Environment
+.env
+.env.local
+
+# Xcode / visionOS (in case Swift is chosen later)
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# Python (in case a simulation/vision pipeline is chosen later)
+__pycache__/
+*.pyc
+.venv/
+venv/
