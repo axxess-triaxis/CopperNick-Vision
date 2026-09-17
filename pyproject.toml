@@ -1,7 +1,7 @@
 [project]
 name = "coppernick"
 version = "0.1.0"
-description = "AI-native cyclone impact and infrastructure vulnerability forecaster"
+description = "AI-native cyclone impact/infrastructure forecaster + passive sky-scanning early-warning system (CopperNick Vision)"
 requires-python = ">=3.11"
 dependencies = [
     "google-genai>=0.3",

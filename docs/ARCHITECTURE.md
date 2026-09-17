@@ -1,4 +1,4 @@
-# CopperNick architecture
+# CopperNick Vision architecture
 
 Status: describes the code as scaffolded, not a deployed or field-tested
 system. This is not the hackathon's required architecture diagram deliverable
