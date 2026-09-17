@@ -48,11 +48,10 @@ other project in this account). What exists right now:
   ([`agent.py`](src/coppernick/agent.py))
 - A FastAPI app wiring the above together ([`web.py`](src/coppernick/web.py))
 - Mocked unit tests for the data loaders and the agent
-- **Deployed to Cloud Run**: https://coppernick-222356459208.asia-south1.run.app
-  (project `project-16c62420-db89-448a-bab`, region `asia-south1`) — currently
-  **IAM-authenticated only, not publicly reachable** (returns 403 to
-  unauthenticated requests). Making it public is a deliberate pending decision,
-  not an oversight.
+- **Deployed to Cloud Run and public**: https://coppernick-222356459208.asia-south1.run.app
+  (project `project-16c62420-db89-448a-bab`, region `asia-south1`) — `GET
+  /health` returns `200 {"status":"ok"}` with no auth required. This is the
+  hackathon's "deployed link" requirement.
 - **Earth Engine is live and verified**: real credentials authenticated, real
   Sentinel-2 queries confirmed working through `fetch_recent_imagery_count`
   against real coordinates.
