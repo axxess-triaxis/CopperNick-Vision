@@ -31,6 +31,39 @@ Gemini (via the Interactions API) reasons over all three to produce a
 plain-language risk assessment and a draft early-warning advisory —
 Gemini does the judgment, the rest of the pipeline stays deterministic.
 
+## Sky Watch — passive early-warning scanning
+
+A second subsystem, strictly civilian early-warning/alerting only — no
+tracking, targeting, or engagement capability of any kind, by design:
+
+1. **Day-sky vision** ([`sky/vision_detect.py`](src/coppernick/sky/vision_detect.py)) —
+   Gemini multimodal classification of a single camera frame for weather,
+   pollution, and aerial-object anomalies (birds, aircraft, drones, debris,
+   etc.). Classification only — no cross-frame tracking, no determination of
+   intent.
+2. **Night-sky cross-referencing** ([`sky/night_sky.py`](src/coppernick/sky/night_sky.py)) —
+   explicitly *not* vision-dependent: resolves real NASA GIBS VIIRS Day/Night
+   Band tile URLs (`VIIRS_NOAA21_DayNightBand`, verified live, checked
+   2026-09-17) for a coordinate and date.
+3. **Hardware-agnostic camera ingestion** ([`sky/camera_ingest.py`](src/coppernick/sky/camera_ingest.py)) —
+   ONVIF (the cross-vendor IP-camera standard) for discovery and stream
+   resolution, plain RTSP as the universal fallback every camera brand
+   supports. **Hardware-unverified**: no physical camera exists in this
+   development environment — the code is correct against the real installed
+   library APIs, not tested against real hardware.
+4. **LLM routing across real data domains** ([`sky/router.py`](src/coppernick/sky/router.py)) —
+   Gemini classifies which of weather / cyclone-track / night-sky / research
+   a query needs; plain Python then calls only those real modules. The model
+   never fetches data itself.
+5. **RAG over public research** ([`rag/`](src/coppernick/rag)) — arXiv's real
+   public API (climate/disaster-response papers) embedded via
+   `gemini-embedding-001` into an in-memory vector store. Public,
+   unclassified sources only.
+6. **Ontology/memory store** ([`sky/ontology.py`](src/coppernick/sky/ontology.py)) —
+   a flat subject-relation-object triple store, Gemini-extracted from
+   observations/research text, JSON-file-persistable. Deliberately not a
+   full RDF/OWL reasoner — see docs/ARCHITECTURE.md for why.
+
 ## Status
 
 Early scaffold, built fresh for this hackathon (no code shared with any
@@ -55,16 +88,29 @@ other project in this account). What exists right now:
 - **Earth Engine is live and verified**: real credentials authenticated, real
   Sentinel-2 queries confirmed working through `fetch_recent_imagery_count`
   against real coordinates.
+- **Sky Watch subsystem scaffolded** (see above): 45/45 tests passing across
+  night-sky, camera ingestion, day-sky vision, RAG, router, and ontology
+  modules — all with mocked externals (no live camera, no live Gemini calls
+  yet run end-to-end, since Gemini itself is still billing-blocked, see below).
 
 **Not yet done** — stated plainly rather than implied otherwise:
-- **Gemini API calls are blocked**: the API key is valid and the code path is
-  verified correct, but every real call currently fails with `429: Your
-  prepayment credits are depleted` — an AI Studio billing/identity-verification
-  issue on the account, separate from standard GCP project billing (which is
-  fine — Earth Engine and Cloud Run both work).
+- **Gemini API calls are blocked**: the API key is valid and every code path
+  is verified correct against real API shapes, but every real call currently
+  fails with `429: Your prepayment credits are depleted` — an AI Studio
+  billing/identity-verification issue on the account, separate from standard
+  GCP project billing (which is fine — Earth Engine and Cloud Run both work).
+  This blocks live end-to-end testing of every Gemini-dependent path: risk
+  assessment, day-sky vision, embeddings, routing, and ontology extraction.
 - No storm surge or rainfall damage *simulation* exists yet (only data
   ingestion + Gemini's own reasoning, not a physical model).
-- The deployed service has not been made publicly accessible yet.
+- **Camera ingestion is hardware-unverified** — correct against the real
+  ONVIF/RTSP library APIs, never exercised against a physical camera.
+- The live Cloud Run service has **not** been updated with the new Sky Watch
+  endpoints yet — only the original `/assess` endpoint has been deployed and
+  its env vars pushed; `/sky/*`, `/research/*`, and `/route` exist in the
+  codebase but are not yet live.
+- The RAG store is in-memory only (resets on every server restart) and needs
+  explicit `/research/index` calls before `/research` returns anything.
 - None of the hackathon's non-code deliverables (demo video, pitch deck) exist
   yet.
 
@@ -76,6 +122,10 @@ other project in this account). What exists right now:
 | Satellite imagery | Google Earth Engine | `ee` | developers.google.com/earth-engine |
 | Historical cyclone tracks | NOAA IBTrACS (North Indian basin) | `pandas` (CSV) | ncei.noaa.gov IBTrACS v04r01 |
 | Live weather | Open-Meteo | `httpx` | open-meteo.com/en/docs |
+| Night-sky imagery | NASA GIBS (VIIRS Day/Night Band) | `httpx` (tile URL only) | gibs.earthdata.nasa.gov, verified via live GetCapabilities |
+| Camera ingestion | ONVIF / RTSP | `onvif-zeep-async`, `wsdiscovery` | introspected from installed package APIs |
+| Text embeddings | Gemini (`gemini-embedding-001`) | `google-genai` | ai.google.dev/gemini-api/docs/embeddings + SDK introspection |
+| Research corpus | arXiv public API | `httpx` | export.arxiv.org, verified live |
 
 ## Setup
 
