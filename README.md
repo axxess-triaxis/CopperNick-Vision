@@ -48,14 +48,26 @@ other project in this account). What exists right now:
   ([`agent.py`](src/coppernick/agent.py))
 - A FastAPI app wiring the above together ([`web.py`](src/coppernick/web.py))
 - Mocked unit tests for the data loaders and the agent
+- **Deployed to Cloud Run**: https://coppernick-222356459208.asia-south1.run.app
+  (project `project-16c62420-db89-448a-bab`, region `asia-south1`) — currently
+  **IAM-authenticated only, not publicly reachable** (returns 403 to
+  unauthenticated requests). Making it public is a deliberate pending decision,
+  not an oversight.
+- **Earth Engine is live and verified**: real credentials authenticated, real
+  Sentinel-2 queries confirmed working through `fetch_recent_imagery_count`
+  against real coordinates.
 
-**Not yet done** — stated plainly rather than implied otherwise: no Google
-Cloud project has been wired up with real credentials from this codebase,
-Earth Engine access has not been requested/approved for this project, no
-storm surge or rainfall damage *simulation* exists yet (only data
-ingestion + Gemini's own reasoning, not a physical model), nothing is
-deployed, and none of the hackathon's non-code deliverables (demo video,
-pitch deck, deployed link) exist yet.
+**Not yet done** — stated plainly rather than implied otherwise:
+- **Gemini API calls are blocked**: the API key is valid and the code path is
+  verified correct, but every real call currently fails with `429: Your
+  prepayment credits are depleted` — an AI Studio billing/identity-verification
+  issue on the account, separate from standard GCP project billing (which is
+  fine — Earth Engine and Cloud Run both work).
+- No storm surge or rainfall damage *simulation* exists yet (only data
+  ingestion + Gemini's own reasoning, not a physical model).
+- The deployed service has not been made publicly accessible yet.
+- None of the hackathon's non-code deliverables (demo video, pitch deck) exist
+  yet.
 
 ## Tools used
 
