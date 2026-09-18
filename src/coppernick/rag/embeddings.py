@@ -17,7 +17,15 @@ from __future__ import annotations
 from google import genai
 from google.genai import types
 
+from ..agent import GEMINI_CALL_TIMEOUT_SECONDS
+
 EMBEDDING_MODEL = "gemini-embedding-001"
+
+# EmbedContentConfig has no top-level `timeout` -- it lives under
+# `http_options.timeout`, and confirmed via introspection to be in
+# milliseconds, not seconds (getting this unit wrong would silently set a
+# ~45ms timeout instead of 45s).
+_HTTP_OPTIONS = types.HttpOptions(timeout=int(GEMINI_CALL_TIMEOUT_SECONDS * 1000))
 
 
 def embed_document(client: genai.Client, text: str) -> list[float]:
@@ -26,7 +34,7 @@ def embed_document(client: genai.Client, text: str) -> list[float]:
     response = client.models.embed_content(
         model=EMBEDDING_MODEL,
         contents=text,
-        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT", http_options=_HTTP_OPTIONS),
     )
     return response.embeddings[0].values
 
@@ -39,6 +47,6 @@ def embed_query(client: genai.Client, text: str) -> list[float]:
     response = client.models.embed_content(
         model=EMBEDDING_MODEL,
         contents=text,
-        config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", http_options=_HTTP_OPTIONS),
     )
     return response.embeddings[0].values

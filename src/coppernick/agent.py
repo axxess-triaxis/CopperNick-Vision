@@ -14,6 +14,13 @@ from google import genai
 
 from .schema import CycloneTrackPoint, InfrastructureRiskAssessment, WeatherSnapshot
 
+# A live production request hung well past 90s with no timeout set (the SDK
+# accepts `timeout: float | httpx.Timeout | None`, confirmed by introspecting
+# the installed client -- default is None, i.e. unbounded) when Gemini
+# returned a 429 rate-limit and the client's own retry behavior didn't fail
+# fast. A bounded timeout turns a multi-minute hang into a clear, fast error.
+GEMINI_CALL_TIMEOUT_SECONDS = 45.0
+
 SYSTEM_PROMPT = """You are CopperNick, an early-warning risk assessment agent for cyclone \
 impact on infrastructure in the Bay of Bengal / coastal India region.
 
@@ -64,5 +71,6 @@ def assess_risk(
             "mime_type": "application/json",
             "schema": InfrastructureRiskAssessment.model_json_schema(),
         },
+        timeout=GEMINI_CALL_TIMEOUT_SECONDS,
     )
     return InfrastructureRiskAssessment.model_validate_json(interaction.output_text)

@@ -19,6 +19,7 @@ import os
 
 from google import genai
 
+from ..agent import GEMINI_CALL_TIMEOUT_SECONDS
 from ..schema import DaySkyAssessment
 
 SYSTEM_PROMPT = """You are CopperNick's Sky Watch vision module -- a passive, civilian \
@@ -71,5 +72,6 @@ def analyze_frame(
             "mime_type": "application/json",
             "schema": DaySkyAssessment.model_json_schema(),
         },
+        timeout=GEMINI_CALL_TIMEOUT_SECONDS,
     )
     return DaySkyAssessment.model_validate_json(interaction.output_text)

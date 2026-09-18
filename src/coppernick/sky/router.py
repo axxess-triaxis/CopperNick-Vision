@@ -16,6 +16,7 @@ from datetime import date
 
 from google import genai
 
+from ..agent import GEMINI_CALL_TIMEOUT_SECONDS
 from ..data import ibtracs, open_meteo
 from ..rag.retrieve import retrieve
 from ..rag.store import VectorStore
@@ -46,6 +47,7 @@ def classify_domains(client: genai.Client, query: str) -> DataDomainRouting:
             "mime_type": "application/json",
             "schema": DataDomainRouting.model_json_schema(),
         },
+        timeout=GEMINI_CALL_TIMEOUT_SECONDS,
     )
     decision = DataDomainRouting.model_validate_json(interaction.output_text)
     decision.domains = [d for d in decision.domains if d in VALID_DOMAINS]
