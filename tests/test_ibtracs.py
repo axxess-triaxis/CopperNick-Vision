@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import io
 
-from coppernick.data.ibtracs import _safe_float, get_storm_track, load_ni_basin_tracks
+from coppernick.data.ibtracs import _BUNDLED_CACHE_PATH, _safe_float, get_storm_track, load_ni_basin_tracks
 
 SAMPLE_CSV = """SID,SEASON,NAME,ISO_TIME,LAT,LON,USA_WIND,USA_PRES
  ,Year, , ,degrees_north,degrees_east,kts,mb
@@ -63,3 +63,32 @@ def test_safe_float_handles_nan_whitespace_and_real_values():
     assert _safe_float("") is None
     assert _safe_float("45.5") == 45.5
     assert _safe_float(pd.NA) is None
+
+
+def test_bundled_cache_file_exists_and_is_a_real_ibtracs_csv():
+    """The whole point of bundling this file is that it's actually there and
+    loadable in the deployed package -- not just referenced in code. This
+    guards against the exact bug this fix could otherwise reintroduce: the
+    file existing in the source tree but silently missing from what
+    `pip install .` actually packages (see pyproject.toml package-data)."""
+
+    assert _BUNDLED_CACHE_PATH.exists(), (
+        f"{_BUNDLED_CACHE_PATH} is missing -- load_ni_basin_tracks() would silently "
+        "fall through to the live NOAA URL, defeating the point of bundling it"
+    )
+    df = load_ni_basin_tracks(_BUNDLED_CACHE_PATH)
+    assert len(df) > 1000  # sanity: this is the real ~63k-row file, not a stub
+    assert "AMPHAN" in df["NAME"].str.upper().values
+
+
+def test_load_ni_basin_tracks_prefers_bundled_cache_over_live_url(monkeypatch):
+    """With no explicit source given, the bundled cache must be used --
+    never a silent network call to NOAA on every request."""
+
+    calls = []
+    monkeypatch.setattr(
+        "coppernick.data.ibtracs.pd.read_csv",
+        lambda source, **kwargs: calls.append(source) or __import__("pandas").DataFrame({"NAME": ["X"]}),
+    )
+    load_ni_basin_tracks()
+    assert calls == [_BUNDLED_CACHE_PATH]

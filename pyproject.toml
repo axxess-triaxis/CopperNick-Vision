@@ -32,3 +32,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+# The bundled IBTrACS snapshot (data/ibtracs.py's _BUNDLED_CACHE_PATH) --
+# without this, `pip install .` only copies .py files and this .csv would
+# silently be missing from the installed package, defeating the whole point
+# of bundling it.
+"coppernick.data" = ["ibtracs_ni_cache.csv"]
