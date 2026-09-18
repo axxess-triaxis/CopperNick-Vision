@@ -104,9 +104,21 @@ APIs," and "confirmed working live," which are three different claims.
   in this build — the AI Studio billing block (see below) was resolved by
   using a separate, unbilled AI Studio project instead of the original
   paid/prepay-blocked one.
-  **Known issue**: this call took 2m41s — likely the ~28MB IBTrACS CSV being
-  re-downloaded on a cold container start, not yet optimized. Fine for a demo
-  video with a pre-warmed instance, not fine for a judge hitting it cold.
+  **Cold-start latency fixed**: that first call took 2m41s, traced to the
+  ~28MB IBTrACS CSV being re-downloaded from NOAA on every cold start
+  (measured at 10-24s depending on network conditions). A snapshot is now
+  bundled inside the installed package (verified present in the built wheel,
+  not just the source tree) — local load time measured at 1.3s.
+  **Timeout fixed**: a separate live test hung 90s+ with no error when Gemini
+  returned a 429, because the SDK's `timeout` parameter defaults to
+  unbounded. Every Gemini call (`agent.py`, `vision_detect.py`, `router.py`,
+  `ontology.py`, `rag/embeddings.py`) now has an explicit 45s timeout,
+  confirmed live: a rate-limited call now fails with a clear error in ~76s
+  (one internal retry, each bounded) instead of hanging indefinitely.
+  **Known constraint, not a bug**: the free-tier AI Studio project used to
+  unblock billing has a hard cap of **20 requests/day for `gemini-3.8-flash`**
+  — confirmed via the API's own error message. Exhausted during this
+  session's testing; resets on its own daily schedule.
 - Earth Engine: real credentials authenticated locally, real Sentinel-2
   queries confirmed against real coordinates through
   `fetch_recent_imagery_count` (locally — not yet wired into the live Cloud
