@@ -18,6 +18,7 @@ from pathlib import Path
 
 from google import genai
 
+from ..agent import GEMINI_CALL_TIMEOUT_SECONDS
 from ..schema import KnowledgeAssertion
 
 SYSTEM_PROMPT = """Extract concrete factual assertions from the given text as \
@@ -58,6 +59,7 @@ def extract_assertions(client: genai.Client, text: str, source: str) -> list[Kno
             {"type": "text", "text": f"Text:\n{text}"},
         ],
         response_format={"type": "text", "mime_type": "application/json", "schema": schema},
+        timeout=GEMINI_CALL_TIMEOUT_SECONDS,
     )
     raw = json.loads(interaction.output_text)
     return [
