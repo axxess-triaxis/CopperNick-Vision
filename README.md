@@ -86,7 +86,7 @@ acts on them automatically.
 
 ## Status
 
-Verified as of 2026-09-17. Read this section literally — it distinguishes
+Verified as of 2026-09-18. Read this section literally — it distinguishes
 "code exists and is tested against mocks," "verified against real external
 APIs," and "confirmed working live," which are three different claims.
 
@@ -94,24 +94,38 @@ APIs," and "confirmed working live," which are three different claims.
 - `GET /health` → `200 {"status":"ok"}`, no auth required.
 - `GET /sky/night?lat=..&lon=..` → a real NASA GIBS tile URL, confirmed via
   a live request against the deployed service (not just local tests).
+- **`GET /assess/{storm_name}` → a real, successful, end-to-end Gemini-powered
+  risk assessment.** Confirmed live against `AMPHAN`/season 2020 at (13.08,
+  80.27): correct `InfrastructureRiskAssessment` JSON, reasoning that
+  correctly referenced AMPHAN's real historical peak intensity (145 kt) and
+  the actual live Open-Meteo forecast at the queried coordinates, and an
+  honest `confidence_caveats` field noting zero satellite imagery scenes were
+  available. This is the first real Gemini call to ever complete successfully
+  in this build — the AI Studio billing block (see below) was resolved by
+  using a separate, unbilled AI Studio project instead of the original
+  paid/prepay-blocked one.
+  **Known issue**: this call took 2m41s — likely the ~28MB IBTrACS CSV being
+  re-downloaded on a cold container start, not yet optimized. Fine for a demo
+  video with a pre-warmed instance, not fine for a judge hitting it cold.
 - Earth Engine: real credentials authenticated locally, real Sentinel-2
   queries confirmed against real coordinates through
-  `fetch_recent_imagery_count` (locally — not yet re-verified through the
-  live Cloud Run service specifically).
-- IBTrACS and Open-Meteo: no auth needed, work as documented.
+  `fetch_recent_imagery_count` (locally — not yet wired into the live Cloud
+  Run service, which is why the live `/assess` call above reported zero
+  imagery scenes).
+- IBTrACS and Open-Meteo: no auth needed, work as documented. One real bug
+  fixed in this pass: IBTrACS uses a whitespace-only string as a missing-value
+  marker in some cells, which crashed `/assess` with a 500 until fixed (see
+  git history) — caught by this very live test, not by local tests alone.
 
-**Code exists, tests pass (45/45 locally as of the last full run), not yet
+**Code exists, tests pass (47/47 locally as of the last full run), not yet
 exercised live:**
-- `/assess/{storm_name}` (cyclone/infrastructure risk assessment)
 - `/sky/day-scan` (day-sky vision classification)
 - `/research/index` and `/research` (RAG indexing/retrieval)
 - `/route` (LLM domain routing)
-- All of the above are Gemini-dependent, and every real Gemini call
-  currently fails with `429: Your prepayment credits are depleted` — an AI
-  Studio billing/identity-verification issue on the account, separate from
-  standard GCP project billing (which is fine — Earth Engine and Cloud Run
-  both work). Nothing above has ever completed a real, successful Gemini
-  call end-to-end.
+- These are Gemini-dependent but structurally identical in pattern to
+  `/assess`, which now works live — high confidence they'll work once
+  exercised, but "high confidence" is not "confirmed," so they stay in this
+  section until actually tested live.
 
 **Explicitly not done:**
 - No physical storm-surge or rainfall-damage *simulation* — only data
