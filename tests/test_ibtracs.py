@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import io
 
-from coppernick.data.ibtracs import get_storm_track, load_ni_basin_tracks
+from coppernick.data.ibtracs import _safe_float, get_storm_track, load_ni_basin_tracks
 
 SAMPLE_CSV = """SID,SEASON,NAME,ISO_TIME,LAT,LON,USA_WIND,USA_PRES
  ,Year, , ,degrees_north,degrees_east,kts,mb
@@ -13,6 +13,14 @@ SAMPLE_CSV = """SID,SEASON,NAME,ISO_TIME,LAT,LON,USA_WIND,USA_PRES
 2026123N10080,2026,AMPHAN,2026-05-16 06:00:00,11.2,79.8,45,998
 2026123N10080,2026,AMPHAN,2026-05-16 12:00:00,12.0,79.5,60,985
 2026456N15085,2026,OTHERSTORM,2026-06-01 00:00:00,15.0,85.0,30,1008
+"""
+
+# Regression fixture for a real production bug: IBTrACS uses a whitespace-only
+# string (a single space) as a missing-value marker in some cells, which
+# pandas reads as a non-null string -- pd.notna() alone doesn't catch it.
+SAMPLE_CSV_WITH_WHITESPACE_MISSING = """SID,SEASON,NAME,ISO_TIME,LAT,LON,USA_WIND,USA_PRES
+ ,Year, , ,degrees_north,degrees_east,kts,mb
+2020123N10080,2020,GAPWIND,2020-05-16 00:00:00,10.5,80.1, ,1005
 """
 
 
@@ -35,3 +43,23 @@ def test_get_storm_track_excludes_other_storms():
     df = load_ni_basin_tracks(io.StringIO(SAMPLE_CSV))
     track = get_storm_track(df, "amphan", season=2026)
     assert all(p.name == "AMPHAN" for p in track)
+
+
+def test_get_storm_track_handles_whitespace_only_missing_value():
+    """Regression test: a real /assess call in production hit ValueError:
+    could not convert string to float: ' ' before this fix."""
+    df = load_ni_basin_tracks(io.StringIO(SAMPLE_CSV_WITH_WHITESPACE_MISSING))
+    track = get_storm_track(df, "GAPWIND", season=2020)
+    assert len(track) == 1
+    assert track[0].wind_knots is None
+    assert track[0].pressure_mb == 1005
+
+
+def test_safe_float_handles_nan_whitespace_and_real_values():
+    import pandas as pd
+
+    assert _safe_float(float("nan")) is None
+    assert _safe_float(" ") is None
+    assert _safe_float("") is None
+    assert _safe_float("45.5") == 45.5
+    assert _safe_float(pd.NA) is None
