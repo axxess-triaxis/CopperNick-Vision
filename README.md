@@ -5,7 +5,8 @@ paired with a passive sky-scanning early-warning subsystem. Built for
 **[Build with AI: Code for Communities](https://hack2skill.com/event/codeforcommunities2)**
 (hack2skill / Google Cloud, Track 05, deadline **2026-09-30**).
 
-**Live**: https://coppernick-222356459208.asia-south1.run.app
+**Live**: https://coppernick-222356459208.asia-south1.run.app/docs (the API's interactive
+docs; `/health` returned 200 on 2026-10-29. The bare root URL has no page and returns 404.)
 
 ## About the name and GOSIM
 
@@ -180,3 +181,11 @@ pytest
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Built by Triaxis Ventures
+
+Built by [Triaxis Ventures Private Limited](https://github.com/axxess-triaxis), whose product is
+[AXXESS TRIaxis](https://github.com/axxess-triaxis/AXXESSTRIAXIS). This is a hackathon build, separate
+from the Triaxis product stack ([PORT4LLEO](https://github.com/axxess-triaxis/port4lleo),
+[Callismatic](https://github.com/axxess-triaxis/callismatic),
+[Omnidamus](https://github.com/axxess-triaxis/Omnidamus), [STILL](https://github.com/axxess-triaxis/STILL)).
